@@ -20,7 +20,7 @@ class Client(threading.Thread):
     def __init__(self):
         super(Client, self).__init__()
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.conn.connect(('192.168.1.93', 8089))
+        self.conn.connect(('192.168.1.196', 8089))
 
         GPIO.setmode(GPIO.BCM)
 
@@ -46,7 +46,7 @@ class Client(threading.Thread):
 
                     if rec["com"] == "data":
                         print(rec["data"])
-#                        self.drive((rec["data"][0]+1)/2, rec["data"][1])
+                        self.drive((rec["data"][0]+1)/2, rec["data"][1])
 
                     elif rec["com"] == "exit":
                         global loop
@@ -69,6 +69,8 @@ class Client(threading.Thread):
             print("error")
             #                if e.errno == errno.ECONNRESET:
             self.conn.close()
+            global loop
+            loop = False
 
     def send_set(self, s):
         def set_default(obj):

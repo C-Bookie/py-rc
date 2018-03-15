@@ -18,6 +18,15 @@ gap = 1 / fps
 
 loop = True
 
+deadzone = 0.25
+
+def correctJoy(n):
+    if n < deadzone and n > -deadzone:
+        return 0
+    if n < 0:
+        return -n**2
+    return n**2
+
 class Connection(threading.Thread):
     def __init__(self, conn):
         threading.Thread.__init__(self)
@@ -26,6 +35,7 @@ class Connection(threading.Thread):
 
         self.daemon = True
         self.start()
+#        self.run()
 
     def run(self):
         while True:
@@ -51,6 +61,7 @@ class Connection(threading.Thread):
                 raise (e)
 
     def send_msg(self, msg):
+        print(msg)
         try:
             msg = struct.pack('>I', len(msg)) + msg
             self.conn.sendall(msg)
@@ -58,6 +69,8 @@ class Connection(threading.Thread):
             print("disconnected")
             #                if e.errno == errno.ECONNRESET:
             self.conn.close()
+            global loop
+            loop = False
 
     def send_set(self, s):
         def set_default(obj):
@@ -93,30 +106,39 @@ class Host(threading.Thread):
     def __init__(self):
         super(Host, self).__init__()
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.bind(('localhost', 8089))
+        self.s.bind(('192.168.1.196', 8089))
         self.s.listen(5)  # become a server socket, maximum 5 connections
         self.lock = threading.Lock()
 
         pygame.init()
+        self.surface = pygame.display.set_mode((400, 300), 0, 32)
+
         self.joystickO = pygame.joystick.Joystick(0)
         self.joystickO.init()
 
         self.daemon = True
-        self.start()
+#        self.start()
+        self.run()
 
     def run(self):
-        while True:
-            conn, address = self.s.accept()
-            self.connection = Connection(conn)
+#        while True:
+        conn, address = self.s.accept()
+        self.connection = Connection(conn)
 
 
     def sync(self):
-            temp = {
-                "com":"data",
-                "data":[self.joystickO.get_axis(0), self.joystickO.get_axis(3)]
-            }
+        temp = {
+            "com":"data",
+            "data":[correctJoy(self.joystickO.get_axis(4)), correctJoy(-self.joystickO.get_axis(1))]
+        }
+#        print(temp)
+        self.connection.send_set(temp)
 
-            self.connection.send_set(temp)
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+        pygame.display.update()
 
 
 
