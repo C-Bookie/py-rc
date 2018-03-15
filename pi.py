@@ -6,8 +6,6 @@ import struct
 
 import RPi.GPIO as GPIO
 
-import time
-
 global clientsocket
 
 servo = 18
@@ -20,7 +18,7 @@ class Client(threading.Thread):
     def __init__(self):
         super(Client, self).__init__()
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.conn.connect(('192.168.1.196', 8089))
+        self.conn.connect(('192.168.1.93', 8089))
 
         GPIO.setmode(GPIO.BCM)
 
@@ -30,11 +28,23 @@ class Client(threading.Thread):
 
         self.pwm = GPIO.PWM(servo, 100)
         self.pwm.start(5)
+        self.cDir = 0.5
+        self.cSpd = 0
 
     def drive(self, dir, spd):
-        self.pwm.ChangeDutyCycle(float((90 * dir) + trim) / 10.0)
-        GPIO.output(back, GPIO.LOW if spd < 0 else GPIO.HIGH)
-        GPIO.output(forth, GPIO.LOW if spd > 0 else GPIO.HIGH)
+        if dir != self.cDir:
+            self.cDir = dir
+            self.pwm.ChangeDutyCycle(float((90 * self.cDir) + trim) / 10.0)
+
+        if spd > 0:
+            spd = 1
+        elif spd < 0:
+            spd = -1
+
+        if spd == self.cSpd:
+            self.cSpd = spd
+            GPIO.output(back, GPIO.LOW if self.cSpd < 0 else GPIO.HIGH)
+            GPIO.output(forth, GPIO.LOW if self.cSpd > 0 else GPIO.HIGH)
 
     def run(self):
         while True:

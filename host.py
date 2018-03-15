@@ -1,6 +1,5 @@
 import socket
 import threading
-import math
 import time
 import struct
 import json
@@ -22,7 +21,7 @@ deadzone = 0.25
 
 def correctJoy(n):
     if n < deadzone and n > -deadzone:
-        return 0
+        return 0.
     if n < 0:
         return -n**2
     return n**2
@@ -106,7 +105,7 @@ class Host(threading.Thread):
     def __init__(self):
         super(Host, self).__init__()
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.bind(('192.168.1.196', 8089))
+        self.s.bind(('192.168.1.93', 8089))
         self.s.listen(5)  # become a server socket, maximum 5 connections
         self.lock = threading.Lock()
 
